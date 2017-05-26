@@ -17,8 +17,8 @@ defmodule MnesiaCluster.Setup do
 
   def start do
     # does table exist
-    case :mnesia.system_info(:tables) |> Enum.find(fn(x) -> x == @table end) do
-      nil -> first_node_in_cluster(Node.list)
+    case does_table_already_exist(tables(), nil) do
+      nil -> create_or_attach_to_cluster(Node.list)
       table -> :mnesia.wait_for_tables([table], 5000)
     end
   end
@@ -51,20 +51,32 @@ defmodule MnesiaCluster.Setup do
   end
 
   # TODO add table schema to another file like Amnesia or use Amnesia?
-  defp first_node_in_cluster([]) do
+  defp create_or_attach_to_cluster([]) do
     # first node in cluster
     :mnesia.stop
     :mnesia.create_schema([node()])
     :mnesia.start
     :mnesia.create_table(@table, [attributes: [:id, :name, :job]])
   end
-  defp first_node_in_cluster(nodes) do
+  defp create_or_attach_to_cluster(nodes) do
     # add this node to cluster
     case :rpc.call(List.first(nodes), :mnesia, :change_config, [:extra_db_nodes, [node()]]) do
       {:ok, result} ->
+        Logger.debug("Adding node to cluster results: #{inspect(result)}")
         :mnesia.add_table_copy(@table, node(), :ram_copies)
       {:error, error} -> error
     end
+  end
+
+  defp tables() do
+    :mnesia.system_info(:tables)
+  end
+
+  def does_table_already_exist([], acc), do: acc
+  # if we find it, just stop looking
+  def does_table_already_exist([@table|_t], _acc), do: @table
+  def does_table_already_exist([_h|t], acc) do
+    does_table_already_exist(t, acc)
   end
 
 end
