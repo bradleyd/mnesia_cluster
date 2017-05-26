@@ -1,5 +1,6 @@
 use Mix.Config
 
+config :mnesia_cluster, table: Person
 config :libcluster,
 topologies: [
   mnesia_nodes: [
