@@ -6,7 +6,7 @@ hacking tools around making mnesia cluster easier
 
 * When a node is deployed it will detect if it is the first node in the cluster.  If so, then it will create the tables and schema.
 
-* If the node is not the first, it will ask the other node(s) to add it to the existing cluster.
+* If the node is not the first, and it does not have a shcema and or table, it will ask the other node(s) to add it to the existing cluster.
 
 * If the node already is apart of the cluster (think re-deploy) then just start and wait for tables.
 
